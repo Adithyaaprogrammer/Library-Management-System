@@ -7,8 +7,10 @@ from datetime import datetime, timedelta
 from worker import celery_init_app
 import flask_excel as excel
 from celery import Celery
-from task import add, create_csv
+from task import add, create_csv,daily_reminder
 from celery.result import AsyncResult
+from celery.schedules import crontab
+
 
 
 
@@ -44,6 +46,18 @@ def get_task_status(task_id):
         return jsonify({"status": "Completed"}), 200
     else:
         return jsonify({"status": "Processing"}), 202
+    
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # # Calls test('hello') every 10 seconds.
+    # sender.add_periodic_task(10.0, daily_reminder.s('vik@app','app.py test 10sec ','<h1>Hello World</h1>'), name='add every 10')
+
+    # Executes every Monday morning at 7:30 a.m.
+    sender.add_periodic_task(
+        crontab(hour=21, minute=40),
+        daily_reminder.s(),
+    )
+    
 
 # @app.route("/celery")
 # def celery_demo():
